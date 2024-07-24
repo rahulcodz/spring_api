@@ -3,6 +3,7 @@ package com.emplmgt.employee_management.controllers;
 import com.emplmgt.employee_management.dto.UserDTO;
 import com.emplmgt.employee_management.entities.UserEntity;
 import com.emplmgt.employee_management.serivices.UserService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,12 +20,12 @@ public class UserController {
     }
 
     @PostMapping
-    public UserDTO createUser(@RequestBody UserDTO userDTO){
+    public UserDTO createUser(@Valid @RequestBody UserDTO userDTO){
         return userService.createUser(userDTO);
     }
 
     @PutMapping
-    public UserDTO updateUser(@RequestBody UserDTO userDTO) {
+    public UserDTO updateUser(@Valid @RequestBody UserDTO userDTO) {
         return userService.updateUser(userDTO);
     }
 
