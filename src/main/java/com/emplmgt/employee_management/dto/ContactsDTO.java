@@ -1,24 +1,36 @@
 package com.emplmgt.employee_management.dto;
 
-import lombok.AllArgsConstructor;
+import com.emplmgt.employee_management.enums.UserRole;
+import jakarta.persistence.Column;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 public class ContactsDTO {
     private Long id;
+    private String userName;
+    private String userEmail;
     private String firstName;
     private String lastName;
-    private String email;
+    private String description;
     private String phone;
-    private boolean verified;
-    private boolean qualified;
-    private Integer createBy;
-    private Integer lastUpDatedBy;
-    private Integer status;
+    private String password;
+    private UserRole userRole;
+    private boolean isDeleted;
+    private boolean isActive;
+    private LocalDateTime joiningDate;
+    private LocalDateTime leavingDate;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private String country;
+    private String pinCode;
+    private String state;
+    private String city;
+    private String street;
+    private String addressNote;
 
-    private ContactsAddressDTO address;
+    private List<ContactLogsDTO> logs;
 
 }
