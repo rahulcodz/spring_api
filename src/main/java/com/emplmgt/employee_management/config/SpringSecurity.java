@@ -25,7 +25,7 @@ public class SpringSecurity {
     private final JwtFilter jwtFilter;
 
     @Autowired
-    public SpringSecurity(UserDetailsServiceImpl userDetailsService, @Lazy JwtFilter jwtFilter) {
+    public SpringSecurity(UserDetailsServiceImpl userDetailsService, JwtFilter jwtFilter) {
         this.userDetailsService = userDetailsService;
         this.jwtFilter = jwtFilter;
     }
@@ -33,16 +33,16 @@ public class SpringSecurity {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http.authorizeHttpRequests(req -> req
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/journal/**", "/user/**").authenticated()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/v0/**").permitAll()
+                        .requestMatchers("/v1/**", "/v2/**").authenticated()
+                        .requestMatchers("/v3/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .csrf(AbstractHttpConfigurer::disable)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
-    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+    public void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
     }
 

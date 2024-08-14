@@ -15,7 +15,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 public class UserController {
@@ -34,20 +36,22 @@ public class UserController {
     }
 
 
-    @PostMapping(path = "auth/create-user")
+    @PostMapping(path = "v3/auth/create-user")
     public ResponseEntity<?> createUser(@Valid @RequestBody UsersDTO userDTO) {
         return userService.createUsers(userDTO);
     }
 
-    @PostMapping(path = "auth/login")
+    @PostMapping(path = "v0/auth/login")
     public ResponseEntity<?> login(@Valid @RequestBody UserLoginDTO userLoginDTO) {
 
         try {
+            Map<String, String> response = new HashMap<>();
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(userLoginDTO.getEmail(), userLoginDTO.getPassword()));
             UserDetails userDetail = userDetailsService.loadUserByUsername(userLoginDTO.getEmail());
             String jwt = jwtUtil.generateToken(userDetail.getUsername());
-            return new ResponseEntity<>(jwt, HttpStatus.OK);
+            response.put("token", jwt);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>("Login failed miserably ??", HttpStatus.BAD_REQUEST);
         }
