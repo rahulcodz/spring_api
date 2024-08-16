@@ -22,8 +22,8 @@ import java.util.Map;
 @RestController
 public class UserController {
 
-    final  UsersService userService;
-    final  UserDetailsServiceImpl userDetailsService;
+    final UsersService userService;
+    final UserDetailsServiceImpl userDetailsService;
     final AuthenticationManager authenticationManager;
     final JwtUtil jwtUtil;
 
@@ -41,6 +41,11 @@ public class UserController {
         return userService.createUsers(userDTO);
     }
 
+    @GetMapping(path = "v0/test")
+    public ResponseEntity<?> getAll() {
+        return new ResponseEntity<>("test", HttpStatus.OK);
+    }
+
     @PostMapping(path = "v0/auth/login")
     public ResponseEntity<?> login(@Valid @RequestBody UserLoginDTO userLoginDTO) {
 
@@ -56,27 +61,6 @@ public class UserController {
             return new ResponseEntity<>("Login failed miserably ??", HttpStatus.BAD_REQUEST);
         }
 
- 
     }
 
-
-//    @PutMapping
-//    public UsersDTO updateUser(@Valid @RequestBody UsersDTO userDTO) {
-//        return userService.updateUser(userDTO);
-//    }
-//
-//    @DeleteMapping(path = "/{id}")
-//    public boolean deleteUser(@PathVariable("id") Long user_id) {
-//        return userService.deleteUser(user_id);
-//    }
-//
-//    @GetMapping(path = "/{id}")
-//    public UsersDTO getUser(@PathVariable("id") Long user_id){
-//        return userService.getUser(user_id);
-//    }
-//
-//    @GetMapping
-//    public List<UsersDTO> getUser() {
-//        return userService.getUsers();
-//    }
 }
