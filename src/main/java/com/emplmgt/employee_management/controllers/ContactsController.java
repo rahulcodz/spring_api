@@ -1,6 +1,7 @@
 package com.emplmgt.employee_management.controllers;
 
 import com.emplmgt.employee_management.dto.ContactsDTO;
+import com.emplmgt.employee_management.dto.ContactsQueryDTO;
 import com.emplmgt.employee_management.entities.ContactsEntity;
 import com.emplmgt.employee_management.serivices.ContactsService;
 import org.springframework.http.ResponseEntity;
@@ -24,9 +25,9 @@ public class ContactsController {
         return contactsService.createContacts(contactsDTO);
     }
 
-    @GetMapping
-    public ResponseEntity<?> getContacts() {
-        return contactsService.getContacts();
+    @PostMapping(path = "/all")
+    public ResponseEntity<?> getContacts(@RequestBody ContactsQueryDTO contactsQueryDTO) {
+        return contactsService.getContacts(contactsQueryDTO);
     }
 
     @GetMapping(path = "/{id}")

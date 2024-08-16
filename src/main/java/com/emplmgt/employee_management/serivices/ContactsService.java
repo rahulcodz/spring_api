@@ -1,16 +1,23 @@
 package com.emplmgt.employee_management.serivices;
 
 import com.emplmgt.employee_management.dto.ContactsDTO;
+import com.emplmgt.employee_management.dto.ContactsQueryDTO;
 import com.emplmgt.employee_management.entities.ContactsEntity;
 import com.emplmgt.employee_management.entities.ContactsLogsEntity;
 import com.emplmgt.employee_management.mappers.ContactMapper;
 import com.emplmgt.employee_management.repositories.ContactLogsRepository;
 import com.emplmgt.employee_management.repositories.ContactsRepository;
+import com.emplmgt.employee_management.repositories.Impl.ContactsSpecification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 
@@ -21,7 +28,8 @@ public class ContactsService {
 
     final ContactMapper contactMapper;
 
-    public ContactsService(ContactsRepository contactsRepository, ContactLogsRepository contactLogsRepository, ContactMapper contactMapper) {
+    public ContactsService(
+            ContactsRepository contactsRepository, ContactLogsRepository contactLogsRepository, ContactMapper contactMapper) {
         this.contactsRepository = contactsRepository;
         this.contactLogsRepository = contactLogsRepository;
         this.contactMapper = contactMapper;
@@ -63,11 +71,17 @@ public class ContactsService {
         }
     }
 
-    public ResponseEntity<?> getContacts() {
+    public ResponseEntity<?> getContacts(ContactsQueryDTO payload) {
         try {
-            List<ContactsEntity> contacts = this.contactsRepository.findAllWithLogs();
-            List<ContactsDTO> contactsData = convertToDTOs(contacts);
-            return new ResponseEntity<>(contactsData, HttpStatus.OK);
+            Pageable pageable = PageRequest.of(payload.getPage(), payload.getSize());
+            System.out.println(payload.getStatus().getInActive());
+
+            Specification<ContactsEntity> spec = ContactsSpecification.byCriteria(payload);
+
+            System.out.println(contactsRepository.findAll(spec, pageable));
+//            List<ContactsDTO> contactsData = convertToDTOs(contacts);
+            Page<ContactsEntity> contactsPage = contactsRepository.findAll(spec, pageable);
+            return new ResponseEntity<>(contactsPage, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>("Error: " + e, HttpStatus.BAD_REQUEST);
         }
