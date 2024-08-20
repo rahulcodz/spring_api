@@ -58,7 +58,7 @@ public class UserController {
             response.put("token", jwt);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>("Login failed miserably ??", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Login failed ??", HttpStatus.BAD_REQUEST);
         }
 
     }

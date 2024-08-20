@@ -12,6 +12,16 @@
 				{
 					"name": "CotactById",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJpc2FiZWxsYXRob21hczE0QGV4YW1wbGUuY29tIiwiaWF0IjoxNzIzNjMxNzEyLCJleHAiOjE3MjM2MzUzMTJ9.HmN-9ffmbZpYmn8kXFrYRvSAyBly5HY0NOSwDNbHo6vKRQBj9CwAeZ9frlEchSsVsYyXCaDyFkNXjs-UmDZiYA",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -40,7 +50,7 @@
 							"bearer": [
 								{
 									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzIyOTIwNDk1fQ.66DRKJ3uRzvZkpgVPUtjQerANre1Y7IytD_CmNN84L0",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJqb2huZG9lQGdtYWlsLmNvbSIsImlhdCI6MTcyMzgwMTU5NCwiZXhwIjoxNzIzODg3OTk0fQ.rGJGNMjp78d0Id4fsQog3UnCRVHsHpuSzlygAK8jXEw68fn8Gv33TwXyTXFOizIXiyBcf-Y72hgT0-Y2IphF2g",
 									"type": "string"
 								}
 							]
@@ -49,7 +59,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "[\r\n    {\r\n        \"userName\": \"johndoe\",\r\n        \"userEmail\": \"johndoe@example.com\",\r\n        \"firstName\": \"John\",\r\n        \"lastName\": \"Doe\",\r\n        \"description\": \"Software Engineer\",\r\n        \"phone\": \"1234567890\",\r\n        \"password\": \"password123\",\r\n        \"userRole\": \"ADMIN\",\r\n        \"joiningDate\": \"2024-07-15T09:00:00\",\r\n        \"leavingDate\": null,\r\n        \"country\": \"USA\",\r\n        \"pinCode\": \"90001\",\r\n        \"state\": \"California\",\r\n        \"city\": \"Los Angeles\",\r\n        \"street\": \"Main St\",\r\n        \"addressNote\": \"Near downtown\",\r\n        \"active\": true\r\n    }\r\n]",
+							"raw": "[\r\n    {\r\n        \"email\": \"john.doe@example.com\",\r\n        \"firstName\": \"John\",\r\n        \"lastName\": \"Doe\",\r\n        \"phone\": \"+1234567890\",\r\n        \"assignedTo\": 1001,\r\n        \"assignedBy\": 1002,\r\n        \"verifiedBy\": 1003,\r\n        \"createdBy\": 1004,\r\n        \"status\": \"ACTIVE\",\r\n        \"country\": \"USA\",\r\n        \"pinCode\": \"12345\",\r\n        \"state\": \"California\",\r\n        \"city\": \"Los Angeles\",\r\n        \"street\": \"Sunset Blvd\",\r\n        \"addressNote\": \"Near Hollywood\",\r\n        \"isVerified\": true,\r\n        \"qualified\": true,\r\n        \"isDeleted\": false,\r\n        \"isActive\": true\r\n    }\r\n]",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -57,7 +67,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://127.0.0.1:8080/contacts",
+							"raw": "http://127.0.0.1:8080/v1/contacts",
 							"protocol": "http",
 							"host": [
 								"127",
@@ -67,6 +77,7 @@
 							],
 							"port": "8080",
 							"path": [
+								"v1",
 								"contacts"
 							]
 						}
@@ -76,10 +87,29 @@
 				{
 					"name": "GetAllContacts",
 					"request": {
-						"method": "GET",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJqb2huZG9lQGdtYWlsLmNvbSIsImlhdCI6MTcyNDEyODk2MCwiZXhwIjoxNzI0MjE1MzYwfQ.u4EpuhqRoVh9EpDMwmTG01Qaan5hj8IEEwWETHxJd02hBOdaJI76eC9DLBZOyXsQu2wEbwETOn8PY-NrEA8HHQ",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
 						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"page\": 0,\r\n    \"size\": 2,\r\n    \"search\": \"\",\r\n    \"isContact\": true,\r\n    \"status\": {\r\n        \"active\": false,\r\n        \"followUp\": false,\r\n        \"noAction\": false,\r\n        \"isVerified\": true,\r\n        \"isActive\": false\r\n    },\r\n    \"dates\": {\r\n        \"lastYear\": true,\r\n        \"lastMonth\": false,\r\n        \"lastWeek\": false,\r\n        \"lastDay\": false,\r\n        \"lastHour\": false\r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
 						"url": {
-							"raw": "http://127.0.0.1:8080/contacts",
+							"raw": "http://127.0.0.1:8080/v1/contacts/all",
 							"protocol": "http",
 							"host": [
 								"127",
@@ -89,14 +119,16 @@
 							],
 							"port": "8080",
 							"path": [
-								"contacts"
+								"v1",
+								"contacts",
+								"all"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "New Request",
+					"name": "DeleteContact",
 					"request": {
 						"method": "DELETE",
 						"header": [],
@@ -117,6 +149,14 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "open",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
 				}
 			]
 		},
@@ -124,14 +164,14 @@
 			"name": "Auth",
 			"item": [
 				{
-					"name": "New Request",
+					"name": "login",
 					"request": {
 						"auth": {
 							"type": "bearer",
 							"bearer": [
 								{
 									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzIyOTIwNDk1fQ.66DRKJ3uRzvZkpgVPUtjQerANre1Y7IytD_CmNN84L0",
+									"value": "",
 									"type": "string"
 								}
 							]
@@ -140,7 +180,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"email\": \"john@email.com\",\r\n    \"password\": \"john\"\r\n}",
+							"raw": "{\r\n    \"email\": \"isabellathomas67@example.com\",\r\n    \"password\": \"isabella2024\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -162,6 +202,93 @@
 								"login"
 							]
 						}
+					},
+					"response": []
+				},
+				{
+					"name": "CreateUser",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userName\": \"isabellathomas\",\r\n    \"userEmail\": \"isabellathomas124@example.com\",\r\n    \"firstName\": \"Isabella\",\r\n    \"lastName\": \"Thomas\",\r\n    \"description\": \"Financial Analyst\",\r\n    \"phone\": \"4561237890\",\r\n    \"password\": \"isabella2024\",\r\n    \"userRole\": \"MODERATOR\",\r\n    \"joiningDate\": \"2023-09-15T09:45:00\",\r\n    \"leavingDate\": null,\r\n    \"isActive\": true\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8080/auth/create-user",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"create-user"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Time",
+			"item": [
+				{
+					"name": "get-time",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJqb2huZG9lMUBnbWFpbC5jb20iLCJpYXQiOjE3MjQxNTEwNjksImV4cCI6MTcyNDIzNzQ2OX0.oGOhP9WDZBn89WGVvN8jmqjexiIz_GYcINqImqPiuXWgHYuTbGzhyDqQ0EYhn3a8CanuyD4O6pWpHzuT3TgXug",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"action\":  2\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8080/v1/time",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"v1",
+								"time"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get-time",
+					"request": {
+						"method": "GET",
+						"header": []
 					},
 					"response": []
 				}
