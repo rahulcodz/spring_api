@@ -85,14 +85,17 @@ public class TimeLogService {
 
             String resMessage = "Time logger started.";
 
-            if(timeLogDTO.getAction() == TimeLog.BREAK){
+            if (timeLogDTO.getAction() == TimeLog.BREAK) {
                 resMessage = "User set on the break.";
             }
-            if(timeLogDTO.getAction() == TimeLog.STOP){
+            if (timeLogDTO.getAction() == TimeLog.STOP) {
                 resMessage = "Time logger stopped.";
             }
 
-            return new ResponseEntity<>(resMessage, HttpStatus.OK);
+            return new ResponseEntity<>(Map.of(
+                    "status", timeLogDTO.getAction(),
+                    "message", resMessage
+            ), HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>("Error: ", HttpStatus.BAD_REQUEST);
         }

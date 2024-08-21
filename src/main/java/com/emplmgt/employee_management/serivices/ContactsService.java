@@ -74,7 +74,7 @@ public class ContactsService {
     public ResponseEntity<?> getContacts(ContactsQueryDTO payload) {
         try {
             Pageable pageable = PageRequest.of(payload.getPage(), payload.getSize());
-            System.out.println(payload.getStatus().getInActive());
+            System.out.println(payload.getStatus().getActive());
 
             Specification<ContactsEntity> spec = ContactsSpecification.byCriteria(payload);
 
