@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2024-08-21T17:08:18+0530",
+    date = "2024-08-21T18:42:17+0530",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 22.0.1 (Oracle Corporation)"
 )
 @Component
@@ -21,18 +21,6 @@ public class UsersMapperImpl implements UsersMapper {
 
         UsersDTO usersDTO = new UsersDTO();
 
-        usersDTO.setId( usersEntity.getId() );
-        usersDTO.setUserName( usersEntity.getUserName() );
-        usersDTO.setUserEmail( usersEntity.getUserEmail() );
-        usersDTO.setPassword( usersEntity.getPassword() );
-        usersDTO.setFirstName( usersEntity.getFirstName() );
-        usersDTO.setLastName( usersEntity.getLastName() );
-        usersDTO.setPhone( usersEntity.getPhone() );
-        usersDTO.setUserRole( usersEntity.getUserRole() );
-        usersDTO.setActive( usersEntity.isActive() );
-        usersDTO.setJoiningDate( usersEntity.getJoiningDate() );
-        usersDTO.setLeavingDate( usersEntity.getLeavingDate() );
-
         return usersDTO;
     }
 
@@ -43,18 +31,6 @@ public class UsersMapperImpl implements UsersMapper {
         }
 
         UsersEntity usersEntity = new UsersEntity();
-
-        usersEntity.setId( usersDTO.getId() );
-        usersEntity.setUserName( usersDTO.getUserName() );
-        usersEntity.setUserEmail( usersDTO.getUserEmail() );
-        usersEntity.setPassword( usersDTO.getPassword() );
-        usersEntity.setFirstName( usersDTO.getFirstName() );
-        usersEntity.setLastName( usersDTO.getLastName() );
-        usersEntity.setPhone( usersDTO.getPhone() );
-        usersEntity.setUserRole( usersDTO.getUserRole() );
-        usersEntity.setActive( usersDTO.isActive() );
-        usersEntity.setJoiningDate( usersDTO.getJoiningDate() );
-        usersEntity.setLeavingDate( usersDTO.getLeavingDate() );
 
         return usersEntity;
     }
