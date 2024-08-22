@@ -8,6 +8,8 @@ import com.emplmgt.employee_management.mappers.ContactMapper;
 import com.emplmgt.employee_management.repositories.ContactLogsRepository;
 import com.emplmgt.employee_management.repositories.ContactsRepository;
 import com.emplmgt.employee_management.repositories.Impl.ContactsSpecification;
+import com.opencsv.CSVReader;
+import com.opencsv.exceptions.CsvValidationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -15,9 +17,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 
@@ -71,6 +75,29 @@ public class ContactsService {
         }
     }
 
+    public ResponseEntity<?> UploadCSV(MultipartFile file, int created, int assigned) throws IOException, CsvValidationException {
+        try {
+            try (CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream()))) {
+                reader.skip(1);
+                String[] nextLine;
+                while ((nextLine = reader.readNext()) != null) {
+                    ContactsDTO contact = mapToContact(nextLine, created, assigned);
+                    ContactsEntity payload = convertToEntity(contact);
+                    ContactsEntity savedData = contactsRepository.save(payload);
+
+                    ContactsLogsEntity logData = new ContactsLogsEntity();
+                    logData.setDescription("Data added by " + created);
+                    logData.setTitle("Data imported by " + created);
+                    logData.setContactsEntity(savedData);
+                    createLog(logData);
+                }
+            }
+            return new ResponseEntity<>("Data imported successfully.", HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error: " + e, HttpStatus.BAD_REQUEST);
+        }
+    }
+
     public ResponseEntity<?> getContacts(ContactsQueryDTO payload) {
         try {
             Pageable pageable = PageRequest.of(payload.getPage(), payload.getSize());
@@ -114,6 +141,24 @@ public class ContactsService {
 
     private void createLog(ContactsLogsEntity contactsLogsEntity) {
         contactLogsRepository.save(contactsLogsEntity);
+    }
+
+    private ContactsDTO mapToContact(String[] data, int created, int assigned) {
+        ContactsDTO contact = new ContactsDTO();
+        contact.setFirstName(data[0]);
+        contact.setLastName(data[1]);
+        contact.setEmail(data[2]);
+        contact.setPhone(data[3]);
+        contact.setCountry(data[4]);
+        contact.setState(data[5]);
+        contact.setCity(data[6]);
+        contact.setStreet(data[7]);
+        contact.setPinCode(data[8]);
+        contact.setAddressNote(data[9]);
+        contact.setCreatedBy(created);
+        contact.setAssignedBy(created);
+        contact.setAssignedTo(assigned);
+        return contact;
     }
 
 }

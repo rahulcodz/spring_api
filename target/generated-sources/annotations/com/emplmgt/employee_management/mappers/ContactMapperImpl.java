@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2024-08-22T12:04:17+0530",
-    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 22.0.1 (Oracle Corporation)"
+    date = "2024-08-22T18:23:20+0530",
+    comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.39.0.v20240725-1906, environment: Java 17.0.11 (Eclipse Adoptium)"
 )
 @Component
 public class ContactMapperImpl implements ContactMapper {
@@ -25,6 +25,30 @@ public class ContactMapperImpl implements ContactMapper {
 
         ContactsDTO contactsDTO = new ContactsDTO();
 
+        contactsDTO.setActive( contactsEntity.isActive() );
+        contactsDTO.setAddressNote( contactsEntity.getAddressNote() );
+        contactsDTO.setAssignedBy( contactsEntity.getAssignedBy() );
+        contactsDTO.setAssignedTo( contactsEntity.getAssignedTo() );
+        contactsDTO.setCity( contactsEntity.getCity() );
+        contactsDTO.setCountry( contactsEntity.getCountry() );
+        contactsDTO.setCreatedAt( contactsEntity.getCreatedAt() );
+        contactsDTO.setCreatedBy( contactsEntity.getCreatedBy() );
+        contactsDTO.setDeleted( contactsEntity.isDeleted() );
+        contactsDTO.setEmail( contactsEntity.getEmail() );
+        contactsDTO.setFirstName( contactsEntity.getFirstName() );
+        contactsDTO.setId( contactsEntity.getId() );
+        contactsDTO.setLastName( contactsEntity.getLastName() );
+        contactsDTO.setLogs( toLogsDTOs( contactsEntity.getLogs() ) );
+        contactsDTO.setPhone( contactsEntity.getPhone() );
+        contactsDTO.setPinCode( contactsEntity.getPinCode() );
+        contactsDTO.setQualified( contactsEntity.isQualified() );
+        contactsDTO.setState( contactsEntity.getState() );
+        contactsDTO.setStatus( contactsEntity.getStatus() );
+        contactsDTO.setStreet( contactsEntity.getStreet() );
+        contactsDTO.setUpdatedAt( contactsEntity.getUpdatedAt() );
+        contactsDTO.setVerified( contactsEntity.isVerified() );
+        contactsDTO.setVerifiedBy( contactsEntity.getVerifiedBy() );
+
         return contactsDTO;
     }
 
@@ -35,6 +59,30 @@ public class ContactMapperImpl implements ContactMapper {
         }
 
         ContactsEntity contactsEntity = new ContactsEntity();
+
+        contactsEntity.setActive( contactsDTO.isActive() );
+        contactsEntity.setAddressNote( contactsDTO.getAddressNote() );
+        contactsEntity.setAssignedBy( contactsDTO.getAssignedBy() );
+        contactsEntity.setAssignedTo( contactsDTO.getAssignedTo() );
+        contactsEntity.setCity( contactsDTO.getCity() );
+        contactsEntity.setCountry( contactsDTO.getCountry() );
+        contactsEntity.setCreatedAt( contactsDTO.getCreatedAt() );
+        contactsEntity.setCreatedBy( contactsDTO.getCreatedBy() );
+        contactsEntity.setDeleted( contactsDTO.isDeleted() );
+        contactsEntity.setEmail( contactsDTO.getEmail() );
+        contactsEntity.setFirstName( contactsDTO.getFirstName() );
+        contactsEntity.setId( contactsDTO.getId() );
+        contactsEntity.setLastName( contactsDTO.getLastName() );
+        contactsEntity.setLogs( contactLogsDTOListToContactsLogsEntityList( contactsDTO.getLogs() ) );
+        contactsEntity.setPhone( contactsDTO.getPhone() );
+        contactsEntity.setPinCode( contactsDTO.getPinCode() );
+        contactsEntity.setQualified( contactsDTO.isQualified() );
+        contactsEntity.setState( contactsDTO.getState() );
+        contactsEntity.setStatus( contactsDTO.getStatus() );
+        contactsEntity.setStreet( contactsDTO.getStreet() );
+        contactsEntity.setUpdatedAt( contactsDTO.getUpdatedAt() );
+        contactsEntity.setVerified( contactsDTO.isVerified() );
+        contactsEntity.setVerifiedBy( contactsDTO.getVerifiedBy() );
 
         return contactsEntity;
     }
@@ -47,6 +95,12 @@ public class ContactMapperImpl implements ContactMapper {
 
         ContactLogsDTO contactLogsDTO = new ContactLogsDTO();
 
+        contactLogsDTO.setActionId( contactsEntity.getActionId() );
+        contactLogsDTO.setCreatedAt( contactsEntity.getCreatedAt() );
+        contactLogsDTO.setDescription( contactsEntity.getDescription() );
+        contactLogsDTO.setId( contactsEntity.getId() );
+        contactLogsDTO.setTitle( contactsEntity.getTitle() );
+
         return contactLogsDTO;
     }
 
@@ -57,6 +111,9 @@ public class ContactMapperImpl implements ContactMapper {
         }
 
         ContactsEntity contactsEntity = new ContactsEntity();
+
+        contactsEntity.setCreatedAt( contactsDTO.getCreatedAt() );
+        contactsEntity.setId( contactsDTO.getId() );
 
         return contactsEntity;
     }
@@ -115,5 +172,34 @@ public class ContactMapperImpl implements ContactMapper {
         }
 
         return list;
+    }
+
+    protected ContactsLogsEntity contactLogsDTOToContactsLogsEntity(ContactLogsDTO contactLogsDTO) {
+        if ( contactLogsDTO == null ) {
+            return null;
+        }
+
+        ContactsLogsEntity contactsLogsEntity = new ContactsLogsEntity();
+
+        contactsLogsEntity.setActionId( contactLogsDTO.getActionId() );
+        contactsLogsEntity.setCreatedAt( contactLogsDTO.getCreatedAt() );
+        contactsLogsEntity.setDescription( contactLogsDTO.getDescription() );
+        contactsLogsEntity.setId( contactLogsDTO.getId() );
+        contactsLogsEntity.setTitle( contactLogsDTO.getTitle() );
+
+        return contactsLogsEntity;
+    }
+
+    protected List<ContactsLogsEntity> contactLogsDTOListToContactsLogsEntityList(List<ContactLogsDTO> list) {
+        if ( list == null ) {
+            return null;
+        }
+
+        List<ContactsLogsEntity> list1 = new ArrayList<ContactsLogsEntity>( list.size() );
+        for ( ContactLogsDTO contactLogsDTO : list ) {
+            list1.add( contactLogsDTOToContactsLogsEntity( contactLogsDTO ) );
+        }
+
+        return list1;
     }
 }
