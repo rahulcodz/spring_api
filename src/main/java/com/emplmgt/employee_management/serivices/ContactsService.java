@@ -1,13 +1,16 @@
 package com.emplmgt.employee_management.serivices;
 
+import com.emplmgt.employee_management.dto.ContactLogsDTO;
 import com.emplmgt.employee_management.dto.ContactsDTO;
 import com.emplmgt.employee_management.dto.ContactsQueryDTO;
 import com.emplmgt.employee_management.entities.ContactsEntity;
 import com.emplmgt.employee_management.entities.ContactsLogsEntity;
+import com.emplmgt.employee_management.entities.UsersEntity;
 import com.emplmgt.employee_management.mappers.ContactMapper;
 import com.emplmgt.employee_management.repositories.ContactLogsRepository;
 import com.emplmgt.employee_management.repositories.ContactsRepository;
 import com.emplmgt.employee_management.repositories.Impl.ContactsSpecification;
+import com.emplmgt.employee_management.repositories.UsersRepository;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import org.springframework.data.domain.Page;
@@ -16,26 +19,29 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
-import java.util.Optional;
 
 
 @Service
 public class ContactsService {
     final ContactsRepository contactsRepository;
     final ContactLogsRepository contactLogsRepository;
+    final UsersRepository userRepository;
 
     final ContactMapper contactMapper;
 
     public ContactsService(
-            ContactsRepository contactsRepository, ContactLogsRepository contactLogsRepository, ContactMapper contactMapper) {
+            ContactsRepository contactsRepository, ContactLogsRepository contactLogsRepository, UsersRepository userRepository, ContactMapper contactMapper) {
         this.contactsRepository = contactsRepository;
         this.contactLogsRepository = contactLogsRepository;
+        this.userRepository = userRepository;
         this.contactMapper = contactMapper;
     }
 
@@ -55,17 +61,25 @@ public class ContactsService {
         return contactMapper.toEntities(contactsDTO);
     }
 
+    public List<ContactLogsDTO> convertToContactLogDTO(List<ContactsLogsEntity> contactsLogsEntities) {
+        return contactMapper.toLogsDTOs(contactsLogsEntities);
+    }
+
     public ResponseEntity<?> createContacts(List<ContactsDTO> contactsDTO) {
         try {
-
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            UsersEntity userDetails = userRepository.findUserByEmail(authentication.getName());
             List<ContactsEntity> payload = convertToEntities(contactsDTO);
             List<ContactsEntity> savedData = contactsRepository.saveAll(payload);
 
             savedData.forEach(element -> {
                 ContactsLogsEntity logData = new ContactsLogsEntity();
-                logData.setDescription(element.getFirstName() + " " + element.getLastName() + " created this contact afresh.");
-                logData.setTitle("First time contact creation");
-                logData.setContactsEntity(element);
+                String title = userDetails.getFirstName() + " " + userDetails.getLastName() + " created " + element.getFirstName() + " " + "afresh.";
+                String description = "First time the contact has been created !";
+                logData.setDescription(description);
+                logData.setTitle(title);
+                logData.setContactId(element.getId());
+                logData.setActionId(0);
                 createLog(logData);
             });
 
@@ -77,6 +91,8 @@ public class ContactsService {
 
     public ResponseEntity<?> UploadCSV(MultipartFile file, int created, int assigned) throws IOException, CsvValidationException {
         try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            UsersEntity userDetails = userRepository.findUserByEmail(authentication.getName());
             try (CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream()))) {
                 reader.skip(1);
                 String[] nextLine;
@@ -86,9 +102,12 @@ public class ContactsService {
                     ContactsEntity savedData = contactsRepository.save(payload);
 
                     ContactsLogsEntity logData = new ContactsLogsEntity();
-                    logData.setDescription("Data added by " + created);
-                    logData.setTitle("Data imported by " + created);
-                    logData.setContactsEntity(savedData);
+                    String title = userDetails.getFirstName() + " " + userDetails.getLastName() + " imported " + savedData.getFirstName();
+                    String description = "First time the contact has been imported !";
+                    logData.setDescription(description);
+                    logData.setTitle(title);
+                    logData.setContactId(savedData.getId());
+                    logData.setActionId(0);
                     createLog(logData);
                 }
             }
@@ -106,7 +125,6 @@ public class ContactsService {
             Specification<ContactsEntity> spec = ContactsSpecification.byCriteria(payload);
 
             System.out.println(contactsRepository.findAll(spec, pageable));
-//            List<ContactsDTO> contactsData = convertToDTOs(contacts);
             Page<ContactsEntity> contactsPage = contactsRepository.findAll(spec, pageable);
             return new ResponseEntity<>(contactsPage, HttpStatus.OK);
         } catch (Exception e) {
@@ -116,15 +134,23 @@ public class ContactsService {
 
     public ResponseEntity<?> getContact(Long id) {
         try {
-            ContactsEntity contact = this.contactsRepository.findByIdWithLogs(id);
-            Optional<ContactsDTO> resData = Optional.ofNullable(convertToDTO(contact));
-            if (resData.isEmpty()) {
-                return new ResponseEntity<>("No data found ??", HttpStatus.NOT_FOUND);
-            } else {
-                return new ResponseEntity<>(resData, HttpStatus.OK);
+            ContactsEntity contact = this.contactsRepository.findByIdAndIsDeletedFalse(id);
+            ContactsDTO resData = convertToDTO(contact);
+
+            if (resData == null) {
+                return new ResponseEntity<>("No contact found ?", HttpStatus.NOT_FOUND);
             }
+
+            List<ContactsLogsEntity> logs = this.contactLogsRepository.findByContactId(id);
+
+            if (!logs.isEmpty()) {
+                List<ContactLogsDTO> logData = convertToContactLogDTO(logs);
+                resData.setLogs(logData);
+            }
+
+            return new ResponseEntity<>(resData, HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>("Error: " + e, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Error: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 

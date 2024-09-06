@@ -1,12 +1,10 @@
 package com.emplmgt.employee_management.entities;
 
 import com.emplmgt.employee_management.enums.Status;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Table(name = "tbl_contacts")
@@ -81,9 +79,6 @@ public class ContactsEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "contactsEntity", fetch = FetchType.LAZY)
-    @JsonManagedReference
-    private List<ContactsLogsEntity> logs;
 
     @PrePersist
     protected void onCreate() {
