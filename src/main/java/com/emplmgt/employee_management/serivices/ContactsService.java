@@ -7,6 +7,8 @@ import com.emplmgt.employee_management.dto.ContactsQueryDTO;
 import com.emplmgt.employee_management.entities.ContactsEntity;
 import com.emplmgt.employee_management.entities.ContactsLogsEntity;
 import com.emplmgt.employee_management.entities.UsersEntity;
+import com.emplmgt.employee_management.enums.Status;
+import com.emplmgt.employee_management.enums.UserRole;
 import com.emplmgt.employee_management.mappers.ContactMapper;
 import com.emplmgt.employee_management.repositories.ContactLogsRepository;
 import com.emplmgt.employee_management.repositories.ContactsRepository;
@@ -162,6 +164,45 @@ public class ContactsService {
         }
     }
 
+    public ResponseEntity<String> contactAction(ChangeAssigneeDTO changeAssigneeDTO) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            UsersEntity assignedByUser = userRepository.findUserByEmail(authentication.getName());
+
+            changeAssigneeDTO.getContacts().forEach(element -> {
+                ContactsEntity contact = this.contactsRepository.findByIdAndIsDeletedFalse(element);
+                if (changeAssigneeDTO.getStatus() != null) {
+                    ContactsLogsEntity logData = new ContactsLogsEntity();
+                    String prev_status = getStatusString(contact.getStatus());
+                    String status = getStatusString(changeAssigneeDTO.getStatus());
+                    String title = "Status updated ";
+                    String description = assignedByUser.getFirstName() + " " + assignedByUser.getLastName() + " " + "changed the status of this contact from" + " " + prev_status + " " + status;
+                    logData.setDescription(description);
+                    logData.setTitle(title);
+                    logData.setContactId(assignedByUser.getId());
+                    contact.setStatus(changeAssigneeDTO.getStatus());
+                    createLog(logData);
+                }
+                if (changeAssigneeDTO.getQualified() != null) {
+                    ContactsLogsEntity logData = new ContactsLogsEntity();
+                    String title = "Contact qualification ";
+                    String description = assignedByUser.getFirstName() + " " + assignedByUser.getLastName() + " " + "changed the qualification status of this contact from contact to lead.";
+                    logData.setDescription(description);
+                    logData.setTitle(title);
+                    logData.setContactId(assignedByUser.getId());
+                    contact.setQualified(changeAssigneeDTO.getQualified());
+                    createLog(logData);
+                }
+                this.contactsRepository.save(contact);
+            });
+
+            return ResponseEntity.status(HttpStatus.OK).body("Action performed !!");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(String.format("Error :%s", e.getMessage()));
+        }
+    }
+
     public ResponseEntity<?> UploadCSV(MultipartFile file, int created, int assigned)
             throws IOException, CsvValidationException {
         try {
@@ -194,11 +235,10 @@ public class ContactsService {
     public ResponseEntity<?> getContacts(ContactsQueryDTO payload) {
         try {
             Pageable pageable = PageRequest.of(payload.getPage(), payload.getSize());
-            System.out.println(payload.getStatus().getActive());
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            UsersEntity userDetails = userRepository.findUserByEmail(authentication.getName());
+            Specification<ContactsEntity> spec = ContactsSpecification.byCriteria(payload, userDetails);
 
-            Specification<ContactsEntity> spec = ContactsSpecification.byCriteria(payload);
-
-            System.out.println(contactsRepository.findAll(spec, pageable));
             Page<ContactsEntity> contactsPage = contactsRepository.findAll(spec, pageable);
             return new ResponseEntity<>(contactsPage, HttpStatus.OK);
         } catch (Exception e) {
@@ -208,7 +248,16 @@ public class ContactsService {
 
     public ResponseEntity<?> getContact(Long id) {
         try {
-            ContactsEntity contact = this.contactsRepository.findByIdAndIsDeletedFalse(id);
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            UsersEntity userDetails = userRepository.findUserByEmail(authentication.getName());
+            ContactsEntity contact;
+
+            if (userDetails.getUserRole() == UserRole.ADMIN) {
+                contact = this.contactsRepository.findByIdAndIsDeletedFalse(id);
+            } else {
+                contact = this.contactsRepository.findByIdAndAssignedToAndIsDeletedFalse(id, Math.toIntExact(userDetails.getId()));
+            }
+
             ContactsDTO resData = convertToDTO(contact);
 
             if (resData == null) {
@@ -324,6 +373,17 @@ public class ContactsService {
         Method method = obj.getClass().getMethod(methodName);
         Object result = method.invoke(obj);
         return result != null ? result.toString() : "";
+    }
+
+    private String getStatusString(Status status) {
+        return switch (status) {
+            case ACTIVE -> "active";
+            case IN_ACTIVE -> "in-active";
+            case FOLLOW_UP -> "follow-up";
+            case NO_ACTION -> "no-action";
+            case VERIFIED -> "verified";
+            case UN_VERIFIED -> "un-verified";
+        };
     }
 
 }

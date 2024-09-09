@@ -37,6 +37,11 @@ public class ContactsController {
         return contactsService.updateContact(contactsDTO);
     }
 
+    @PutMapping(path = "/action")
+    public ResponseEntity<?> actionChanges(@RequestBody ChangeAssigneeDTO changeAssigneeDto) {
+        return contactsService.contactAction(changeAssigneeDto);
+    }
+
     @PutMapping(path = "/assign-to")
     public ResponseEntity<?> updateContact(@RequestBody ChangeAssigneeDTO changeAssigneeDto) {
         return contactsService.changeAssignee(changeAssigneeDto);

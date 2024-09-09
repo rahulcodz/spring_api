@@ -2,6 +2,8 @@ package com.emplmgt.employee_management.repositories.Impl;
 
 import com.emplmgt.employee_management.dto.ContactsQueryDTO;
 import com.emplmgt.employee_management.entities.ContactsEntity;
+import com.emplmgt.employee_management.entities.UsersEntity;
+import com.emplmgt.employee_management.enums.UserRole;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
@@ -18,9 +20,13 @@ import java.util.List;
 
 public class ContactsSpecification {
 
-    public static Specification<ContactsEntity> byCriteria(ContactsQueryDTO dto) {
+    public static Specification<ContactsEntity> byCriteria(ContactsQueryDTO dto, UsersEntity usersEntity) {
         return (Root<ContactsEntity> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
+
+            if(usersEntity.getUserRole() != UserRole.ADMIN){
+                predicates.add(criteriaBuilder.equal(root.get("assignedTo"), usersEntity.getId()));
+            }
 
             // Handle isDeleted filter
             if (dto.getIsDeleted() != null) {
