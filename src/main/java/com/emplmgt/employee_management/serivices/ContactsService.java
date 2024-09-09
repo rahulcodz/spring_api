@@ -1,5 +1,6 @@
 package com.emplmgt.employee_management.serivices;
 
+import com.emplmgt.employee_management.dto.ChangeAssigneeDTO;
 import com.emplmgt.employee_management.dto.ContactLogsDTO;
 import com.emplmgt.employee_management.dto.ContactsDTO;
 import com.emplmgt.employee_management.dto.ContactsQueryDTO;
@@ -13,6 +14,8 @@ import com.emplmgt.employee_management.repositories.Impl.ContactsSpecification;
 import com.emplmgt.employee_management.repositories.UsersRepository;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,11 +29,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.List;
-
+import java.lang.reflect.Method;
+import java.util.*;
 
 @Service
 public class ContactsService {
+    private static final Logger log = LoggerFactory.getLogger(ContactsService.class);
     final ContactsRepository contactsRepository;
     final ContactLogsRepository contactLogsRepository;
     final UsersRepository userRepository;
@@ -38,7 +42,8 @@ public class ContactsService {
     final ContactMapper contactMapper;
 
     public ContactsService(
-            ContactsRepository contactsRepository, ContactLogsRepository contactLogsRepository, UsersRepository userRepository, ContactMapper contactMapper) {
+            ContactsRepository contactsRepository, ContactLogsRepository contactLogsRepository,
+            UsersRepository userRepository, ContactMapper contactMapper) {
         this.contactsRepository = contactsRepository;
         this.contactLogsRepository = contactLogsRepository;
         this.userRepository = userRepository;
@@ -74,8 +79,8 @@ public class ContactsService {
 
             savedData.forEach(element -> {
                 ContactsLogsEntity logData = new ContactsLogsEntity();
-                String title = userDetails.getFirstName() + " " + userDetails.getLastName() + " created " + element.getFirstName() + " " + "afresh.";
-                String description = "First time the contact has been created !";
+                String title = "Contact created";
+                String description = userDetails.getFirstName() + " " + userDetails.getLastName() + " " + "created this contact";
                 logData.setDescription(description);
                 logData.setTitle(title);
                 logData.setContactId(element.getId());
@@ -85,11 +90,80 @@ public class ContactsService {
 
             return new ResponseEntity<>("Contacts created successfully !!", HttpStatus.CREATED);
         } catch (Exception e) {
-            return new ResponseEntity<>("Something went wrong while creating contact, try again ??", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Something went wrong while creating contact, try again ??",
+                    HttpStatus.BAD_REQUEST);
         }
     }
 
-    public ResponseEntity<?> UploadCSV(MultipartFile file, int created, int assigned) throws IOException, CsvValidationException {
+    public ResponseEntity<?> updateContact(ContactsDTO contactsDTO) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            UsersEntity userDetails = userRepository.findUserByEmail(authentication.getName());
+            ContactsEntity contact = this.contactsRepository.findByIdAndIsDeletedFalse(contactsDTO.getId());
+
+            String title = String.format("%s %s updated the contact", userDetails.getFirstName(),
+                    userDetails.getLastName());
+            String description = buildDescription(contact, contactsDTO);
+
+            if (!description.isEmpty()) {
+                ContactsLogsEntity logData = new ContactsLogsEntity();
+                logData.setDescription(description);
+                logData.setTitle(title);
+                logData.setContactId(contact.getId());
+                createLog(logData);
+            }
+
+            ContactsEntity payload = updateValue(contactsDTO);
+
+            this.contactsRepository.save(payload);
+
+            return new ResponseEntity<>("Contacts updated successfully !!", HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    public ResponseEntity<String> changeAssignee(ChangeAssigneeDTO changeAssigneeDTO) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            UsersEntity assignedByUser = userRepository.findUserByEmail(authentication.getName());
+
+            Optional<UsersEntity> assignedToUserOptional = userRepository.findById(changeAssigneeDTO.getAssignee());
+
+            if (assignedToUserOptional.isPresent()) {
+                UsersEntity assignedToUser = assignedToUserOptional.get();
+
+                changeAssigneeDTO.getContacts().forEach(element -> {
+                    ContactsEntity contact = this.contactsRepository.findByIdAndIsDeletedFalse(element);
+                    contact.setAssignedBy(Math.toIntExact(assignedByUser.getId()));
+                    contact.setAssignedTo(Math.toIntExact(assignedToUser.getId()));
+                    this.contactsRepository.save(contact);
+
+                    ContactsLogsEntity logData = new ContactsLogsEntity();
+                    logData.setTitle("Ownership changed");
+                    logData.setDescription(String.format("%s %s assigned contact to %s %s",
+                            assignedByUser.getFirstName(), assignedByUser.getLastName(), assignedToUser.getFirstName(),
+                            assignedToUser.getLastName()));
+                    logData.setContactId(contact.getId());
+                    createLog(logData);
+
+                });
+
+                String message = String.format("Contacts assigned to %s %s", assignedToUser.getFirstName(),
+                        assignedToUser.getLastName());
+                return ResponseEntity.ok(message);
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("There is no such user available");
+            }
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(String.format("Error :%s", e.getMessage()));
+        }
+    }
+
+    public ResponseEntity<?> UploadCSV(MultipartFile file, int created, int assigned)
+            throws IOException, CsvValidationException {
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             UsersEntity userDetails = userRepository.findUserByEmail(authentication.getName());
@@ -102,8 +176,8 @@ public class ContactsService {
                     ContactsEntity savedData = contactsRepository.save(payload);
 
                     ContactsLogsEntity logData = new ContactsLogsEntity();
-                    String title = userDetails.getFirstName() + " " + userDetails.getLastName() + " imported " + savedData.getFirstName();
-                    String description = "First time the contact has been imported !";
+                    String title = "Contact imported ";
+                    String description = userDetails.getFirstName() + " " + userDetails.getLastName() + " " + "imported this contact";
                     logData.setDescription(description);
                     logData.setTitle(title);
                     logData.setContactId(savedData.getId());
@@ -156,7 +230,8 @@ public class ContactsService {
 
     public ResponseEntity<?> deleteContact(Long id) {
         try {
-            ContactsEntity contacts = this.contactsRepository.findById(id).orElseThrow(() -> new RuntimeException("Contact not found ?"));
+            ContactsEntity contacts = this.contactsRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Contact not found ?"));
             contacts.setDeleted(true);
             this.contactsRepository.save(contacts);
             return new ResponseEntity<>("Contact deleted successfully !!", HttpStatus.ACCEPTED);
@@ -185,6 +260,70 @@ public class ContactsService {
         contact.setAssignedBy(created);
         contact.setAssignedTo(assigned);
         return contact;
+    }
+
+    private ContactsEntity updateValue(ContactsDTO contactsDTO) {
+
+        ContactsEntity contact = new ContactsEntity();
+
+        contact.setId(contactsDTO.getId());
+        contact.setEmail(contactsDTO.getEmail());
+        contact.setFirstName(contactsDTO.getFirstName());
+        contact.setLastName(contactsDTO.getLastName());
+        contact.setPhone(contactsDTO.getPhone());
+        contact.setCountry(contactsDTO.getCountry());
+        contact.setPinCode(contactsDTO.getPinCode());
+        contact.setState(contactsDTO.getState());
+        contact.setCity(contactsDTO.getCity());
+        contact.setStreet(contactsDTO.getStreet());
+        contact.setAddressNote(contactsDTO.getAddressNote());
+
+        return contact;
+    }
+
+    private static String buildDescription(Object oldObject, Object newObject) {
+        Map<String, String[]> fieldGetters = new HashMap<>();
+        fieldGetters.put("Email", new String[]{"getEmail"});
+        fieldGetters.put("First Name", new String[]{"getFirstName"});
+        fieldGetters.put("Last Name", new String[]{"getLastName"});
+        fieldGetters.put("Phone", new String[]{"getPhone"});
+        fieldGetters.put("Country", new String[]{"getCountry"});
+        fieldGetters.put("Pin Code", new String[]{"getPinCode"});
+        fieldGetters.put("State", new String[]{"getState"});
+        fieldGetters.put("City", new String[]{"getCity"});
+        fieldGetters.put("Street", new String[]{"getStreet"});
+        fieldGetters.put("Address Note", new String[]{"getAddressNote"});
+
+        StringBuilder descriptionBuilder = new StringBuilder();
+        for (Map.Entry<String, String[]> entry : fieldGetters.entrySet()) {
+            String field = entry.getKey();
+            String[] getters = entry.getValue();
+
+            try {
+                String oldValue = invokeGetter(oldObject, getters[0]);
+                String newValue = invokeGetter(newObject, getters[0]);
+
+                if (!Objects.equals(oldValue, newValue)) {
+                    if (!descriptionBuilder.isEmpty()) {
+                        descriptionBuilder.append("<Br />");
+                    }
+                    descriptionBuilder.append(field)
+                            .append(": ")
+                            .append(oldValue)
+                            .append(" -> ")
+                            .append(newValue);
+                }
+            } catch (Exception e) {
+                log.error(e.getMessage());
+            }
+        }
+        return descriptionBuilder.toString();
+    }
+
+    private static String invokeGetter(Object obj, String methodName) throws Exception {
+        Method method = obj.getClass().getMethod(methodName);
+        Object result = method.invoke(obj);
+        return result != null ? result.toString() : "";
     }
 
 }
