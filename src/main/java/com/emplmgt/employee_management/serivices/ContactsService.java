@@ -7,6 +7,7 @@ import com.emplmgt.employee_management.dto.ContactsQueryDTO;
 import com.emplmgt.employee_management.entities.ContactsEntity;
 import com.emplmgt.employee_management.entities.ContactsLogsEntity;
 import com.emplmgt.employee_management.entities.UsersEntity;
+import com.emplmgt.employee_management.enums.NotificationCategory;
 import com.emplmgt.employee_management.enums.Status;
 import com.emplmgt.employee_management.enums.UserRole;
 import com.emplmgt.employee_management.mappers.ContactMapper;
@@ -42,14 +43,19 @@ public class ContactsService {
     final UsersRepository userRepository;
 
     final ContactMapper contactMapper;
+    private final EmailService emailService;
+    private final NotificationService notificationService;
 
     public ContactsService(
             ContactsRepository contactsRepository, ContactLogsRepository contactLogsRepository,
-            UsersRepository userRepository, ContactMapper contactMapper) {
+            UsersRepository userRepository, ContactMapper contactMapper, EmailService emailService,
+            NotificationService notificationService) {
         this.contactsRepository = contactsRepository;
         this.contactLogsRepository = contactLogsRepository;
         this.userRepository = userRepository;
         this.contactMapper = contactMapper;
+        this.emailService = emailService;
+        this.notificationService = notificationService;
     }
 
     public ContactsDTO convertToDTO(ContactsEntity contactsEntity) {
@@ -82,11 +88,12 @@ public class ContactsService {
             savedData.forEach(element -> {
                 ContactsLogsEntity logData = new ContactsLogsEntity();
                 String title = "Contact created";
-                String description = userDetails.getFirstName() + " " + userDetails.getLastName() + " " + "created this contact";
+                String description = userDetails.getFirstName() + " " + userDetails.getLastName() + " "
+                        + "created this contact";
                 logData.setDescription(description);
                 logData.setTitle(title);
                 logData.setContactId(element.getId());
-                logData.setActionId(0);
+                logData.setActionId(Math.toIntExact(userDetails.getId()));
                 createLog(logData);
             });
 
@@ -112,6 +119,7 @@ public class ContactsService {
                 logData.setDescription(description);
                 logData.setTitle(title);
                 logData.setContactId(contact.getId());
+                logData.setActionId(Math.toIntExact(userDetails.getId()));
                 createLog(logData);
             }
 
@@ -147,7 +155,11 @@ public class ContactsService {
                             assignedByUser.getFirstName(), assignedByUser.getLastName(), assignedToUser.getFirstName(),
                             assignedToUser.getLastName()));
                     logData.setContactId(contact.getId());
+                    logData.setActionId(Math.toIntExact(assignedByUser.getId()));
                     createLog(logData);
+                    notificationService.sendNotification(contact.getId(), assignedToUser.getId(),
+                            assignedByUser.getId(), "Contact assigned to you.", logData.getDescription(),
+                            NotificationCategory.CONTACT);
 
                 });
 
@@ -176,21 +188,28 @@ public class ContactsService {
                     String prev_status = getStatusString(contact.getStatus());
                     String status = getStatusString(changeAssigneeDTO.getStatus());
                     String title = "Status updated ";
-                    String description = assignedByUser.getFirstName() + " " + assignedByUser.getLastName() + " " + "changed the status of this contact from" + " " + prev_status + " " + status;
+                    String description = String.format("%s %s changed the status of this contact from %s to %s",
+                            assignedByUser.getFirstName(),
+                            assignedByUser.getLastName(),
+                            prev_status,
+                            status);
                     logData.setDescription(description);
                     logData.setTitle(title);
-                    logData.setContactId(assignedByUser.getId());
+                    logData.setContactId(element);
                     contact.setStatus(changeAssigneeDTO.getStatus());
+                    logData.setActionId(Math.toIntExact(assignedByUser.getId()));
                     createLog(logData);
                 }
                 if (changeAssigneeDTO.getQualified() != null) {
                     ContactsLogsEntity logData = new ContactsLogsEntity();
                     String title = "Contact qualification ";
-                    String description = assignedByUser.getFirstName() + " " + assignedByUser.getLastName() + " " + "changed the qualification status of this contact from contact to lead.";
+                    String description = assignedByUser.getFirstName() + " " + assignedByUser.getLastName() + " "
+                            + "changed the qualification status of this contact from contact to lead.";
                     logData.setDescription(description);
                     logData.setTitle(title);
-                    logData.setContactId(assignedByUser.getId());
+                    logData.setContactId(element);
                     contact.setQualified(changeAssigneeDTO.getQualified());
+                    logData.setActionId(Math.toIntExact(assignedByUser.getId()));
                     createLog(logData);
                 }
                 this.contactsRepository.save(contact);
@@ -218,11 +237,12 @@ public class ContactsService {
 
                     ContactsLogsEntity logData = new ContactsLogsEntity();
                     String title = "Contact imported ";
-                    String description = userDetails.getFirstName() + " " + userDetails.getLastName() + " " + "imported this contact";
+                    String description = userDetails.getFirstName() + " " + userDetails.getLastName() + " "
+                            + "imported this contact";
                     logData.setDescription(description);
                     logData.setTitle(title);
                     logData.setContactId(savedData.getId());
-                    logData.setActionId(0);
+                    logData.setActionId(Math.toIntExact(userDetails.getId()));
                     createLog(logData);
                 }
             }
@@ -255,7 +275,8 @@ public class ContactsService {
             if (userDetails.getUserRole() == UserRole.ADMIN) {
                 contact = this.contactsRepository.findByIdAndIsDeletedFalse(id);
             } else {
-                contact = this.contactsRepository.findByIdAndAssignedToAndIsDeletedFalse(id, Math.toIntExact(userDetails.getId()));
+                contact = this.contactsRepository.findByIdAndAssignedToAndIsDeletedFalse(id,
+                        Math.toIntExact(userDetails.getId()));
             }
 
             ContactsDTO resData = convertToDTO(contact);
@@ -332,16 +353,16 @@ public class ContactsService {
 
     private static String buildDescription(Object oldObject, Object newObject) {
         Map<String, String[]> fieldGetters = new HashMap<>();
-        fieldGetters.put("Email", new String[]{"getEmail"});
-        fieldGetters.put("First Name", new String[]{"getFirstName"});
-        fieldGetters.put("Last Name", new String[]{"getLastName"});
-        fieldGetters.put("Phone", new String[]{"getPhone"});
-        fieldGetters.put("Country", new String[]{"getCountry"});
-        fieldGetters.put("Pin Code", new String[]{"getPinCode"});
-        fieldGetters.put("State", new String[]{"getState"});
-        fieldGetters.put("City", new String[]{"getCity"});
-        fieldGetters.put("Street", new String[]{"getStreet"});
-        fieldGetters.put("Address Note", new String[]{"getAddressNote"});
+        fieldGetters.put("Email", new String[] { "getEmail" });
+        fieldGetters.put("First Name", new String[] { "getFirstName" });
+        fieldGetters.put("Last Name", new String[] { "getLastName" });
+        fieldGetters.put("Phone", new String[] { "getPhone" });
+        fieldGetters.put("Country", new String[] { "getCountry" });
+        fieldGetters.put("Pin Code", new String[] { "getPinCode" });
+        fieldGetters.put("State", new String[] { "getState" });
+        fieldGetters.put("City", new String[] { "getCity" });
+        fieldGetters.put("Street", new String[] { "getStreet" });
+        fieldGetters.put("Address Note", new String[] { "getAddressNote" });
 
         StringBuilder descriptionBuilder = new StringBuilder();
         for (Map.Entry<String, String[]> entry : fieldGetters.entrySet()) {
