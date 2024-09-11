@@ -1,5 +1,6 @@
 package com.emplmgt.employee_management.controllers;
 
+import com.emplmgt.employee_management.dto.ChangeUserPasswordDTO;
 import com.emplmgt.employee_management.dto.UserLoginDTO;
 import com.emplmgt.employee_management.dto.UsersDTO;
 import com.emplmgt.employee_management.serivices.Impl.UserDetailsServiceImpl;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
 public class UserController {
@@ -37,6 +39,36 @@ public class UserController {
     @PostMapping(path = "v3/auth/create-user")
     public ResponseEntity<?> createUser(@Valid @RequestBody UsersDTO userDTO) {
         return userService.createUsers(userDTO);
+    }
+
+    @GetMapping(path = "v3/admin/get-users")
+    public ResponseEntity<?> getAllUsers() {
+        try {
+            return userService.getUsers();
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PutMapping(path = "v1/update-user")
+    public ResponseEntity<?> updateUser(@Valid @RequestBody UsersDTO userDTO) {
+        try {
+            return userService.updateUser(userDTO);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PutMapping(path = "v1/change-password")
+    public ResponseEntity<?> changePassword(@RequestBody ChangeUserPasswordDTO changeUserPasswordDTO) {
+        try {
+            if (!Objects.equals(changeUserPasswordDTO.getConfirmPassword(), changeUserPasswordDTO.getPassword())) {
+                return new ResponseEntity<>("Password and Confirm password must be equal.", HttpStatus.BAD_REQUEST);
+            }
+            return userService.changePassword(changeUserPasswordDTO);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @GetMapping(path = "v0/test")

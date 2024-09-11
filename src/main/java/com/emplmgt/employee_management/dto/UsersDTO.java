@@ -22,6 +22,7 @@ public class UsersDTO {
     private String firstName;
     private String lastName;
     private String phone;
+    private String description;
     private UserRole userRole;
     private boolean isActive;
     private LocalDateTime joiningDate;
