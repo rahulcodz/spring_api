@@ -7,4 +7,6 @@ import java.time.LocalDateTime;
 public interface TimeLogProjection {
     LocalDateTime getEntry();
     TimeLog getAction();
+
+    String getEmail();
 }
